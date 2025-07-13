@@ -1,0 +1,170 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  // output   = "../generated/prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  DOSEN
+  VALIDATOR
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum NamaSemester {
+  GENAP
+  GANJIL
+}
+
+enum Jabatan {
+  LEKTOR
+}
+
+model User {
+  id       Int    @id @default(autoincrement())
+  email    String @unique
+  username String @unique
+  name     String
+  password String
+
+  role Role @default(DOSEN)
+
+  status UserStatus @default(ACTIVE)
+
+  hashedRefreshToken String?
+
+  passwordResetToken   String?
+  passwordResetExpires DateTime?
+
+  createdAt DateTime @default(now())
+  updateAt  DateTime @updatedAt
+}
+
+model Fakultas {
+  id   Int    @id @default(autoincrement())
+  kode String @unique
+  nama String @unique
+
+  prodi Prodi[]
+  dosen Dosen[]
+
+  createdAt DateTime @default(now())
+  updateAt  DateTime @updatedAt
+}
+
+model Prodi {
+  id   Int    @id @default(autoincrement())
+  kode String @unique
+  nama String @unique
+
+  fakultasId Int
+  fakultas   Fakultas @relation(fields: [fakultasId], references: [id])
+
+  dosen Dosen[]
+
+  createdAt DateTime @default(now())
+  updateAt  DateTime @updatedAt
+}
+
+model Semester {
+  id           Int          @id @default(autoincrement())
+  kode         Int
+  nama         String
+  tipe         NamaSemester
+  tahunMulai   Int
+  tahunSelesai Int
+
+  createdAt          DateTime             @default(now())
+  updateAt           DateTime             @updatedAt
+  KegiatanPendidikan KegiatanPendidikan[]
+
+  @@index([tipe])
+  @@index([tahunMulai, tahunSelesai])
+}
+
+model Setting {
+  id          Int    @id @default(autoincrement())
+  name        String
+  nameRektor String
+}
+
+model Dosen {
+  id             Int      @id @default(autoincrement())
+  nip            Int
+  nuptk          Int
+  nama           String
+  prodiId        Int
+  prodi          Prodi    @relation(fields: [prodiId], references: [id])
+  fakultasId     Int
+  fakultas       Fakultas @relation(fields: [fakultasId], references: [id])
+  email          String   @unique
+  jenis_kelamin  String
+  no_hp          Int      @unique
+  jabatan        String
+  npwp           Int
+  nama_bank      String
+  no_rek         Int
+  bpjs_kesehatan String
+  bpjs_tkerja    String
+  no_kk          Int
+
+  createdAt  DateTime     @default(now())
+  updateAt   DateTime     @updatedAt
+  pendidikan Pendidikan[]
+}
+
+enum Jenjang {
+  S1
+  S2
+  S3
+}
+
+model Pendidikan {
+  id          Int      @id @default(autoincrement())
+  dosenId     Int
+  dosen       Dosen    @relation(fields: [dosenId], references: [id])
+  jenjang     Jenjang
+  prodi       String
+  fakultas    String
+  nama_kampus String
+  lulus_tahun Int
+  file        String
+  createdAt   DateTime @default(now())
+  updateAt    DateTime @updatedAt
+}
+
+model PelaksanaanPendidikan {
+  id             Int    @id @default(autoincrement())
+  jenis_kategori String
+  jenis_keg      String
+  sub_keg        String
+  nilai_pak      Float
+}
+
+model KegiatanPendidikan {
+  id               Int      @id @default(autoincrement())
+  nama             String
+  affiliasi        String
+  detail           String
+  semesterId       Int
+  semester         Semester @relation(fields: [semesterId], references: [id])
+  jumlah_mahasiswa Int
+  total            Float
+  bukti            String
+  createdAt        DateTime @default(now())
+  updateAt         DateTime @updatedAt
+}
